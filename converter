@@ -1,0 +1,225 @@
+#! /bin/bash
+
+convert(){
+echo "Video to mp3 conversion"
+echo -n "Enter the filename to convert: "
+read inputFile
+if [ -z "$inputFile" ]
+then
+	echo "You must provide a file name to convert!"
+	exit
+else
+	if [ -f "$inputFile" ]
+	then
+
+		echo -n "Enter the output filename: "
+		read outPutFile
+		if [ -z "$outPutFile" ]
+		then 
+			outPutFile="$inputFile"
+
+		else
+			outPutFile="$outPutFile".mp3
+		fi
+	else
+		echo "File $inputFile does not exist!"
+
+		exit
+    fi
+fi	
+
+echo "Converting...."
+sleep 4
+ ffmpeg -y -i $inputFile -vn $outPutFile
+ 
+if [ "$?" == "0" ]
+then
+	echo "Successfully saved as $outPutFile"
+
+else
+	echo "Something went wrong :("
+	rm -i $outPutFile &> /dev/null
+	exit 1
+fi
+
+	
+}
+
+pic2Video(){
+	echo "Enter the name of the image"
+	read imageFile
+	if [ -z "$imageFile" ]
+	then
+		echo "Image must be provided!"
+		exit
+	else
+		if [ -f "$imageFile" ]
+		then
+			echo "Name of the audio file: "
+			read audioFile
+			if [ -z "$audioFile" ]
+			then 
+				echo "You have to provide an audio file!"
+				exit 1
+			else
+				if [ -f "$audioFile" ]
+				then
+					echo -n "Output file name: "
+					read pic2vidOut
+					if [ -z "$pic2vidOut" ]
+					then
+						pic2vidOut="$audioFile".mkv
+					else
+						pic2vidOut="$pic2vidOut".mkv
+					
+					fi
+				else
+					echo "The file $audioFile does not exist!"
+					exit 1
+				fi
+					sleep 3
+					ffmpeg -loop 1 -y -i "$imageFile" -i "$audioFile"  -acodec flac -vcodec libx264 -shortest -preset fast -vf scale=1280:-2 "$pic2vidOut"
+						if [ "$?" == "0" ]
+						then
+							echo "File saved as $pic2vidOut"
+						else
+							rm $pic2vidOut &> /dev/null
+							echo "Something went wrong :("
+							exit 1
+						fi	
+
+
+				fi
+		fi	
+	fi
+	
+
+}
+
+formatConvert(){
+
+echo "Video Format Conversion"
+echo "Enter the video to convert:"
+read video
+if [ -z "$video" ]
+then
+	echo "You must provide a filename!"
+	exit
+else
+	if [ ! -f "$video" ]
+	then
+		echo "The file $video does not exist!"
+		exit
+fi	
+	echo "Enter the format:"
+	read vidFormat
+	echo "Output filename: "
+	read videoName
+	if [ -z $videoName ]
+	then
+		$videoName="output"
+	fi
+echo "Converting...."
+sleep 4
+	case "$vidFormat" in
+		avi)
+			echo "The format is avi"
+			ffmpeg -loglevel panic -i $video -q:a 0 -q:v 0 -f avi -preset veryslow  "$videoName".avi
+			;;
+		webm)
+			echo "The format is webm"
+			ffmpeg -loglevel panic -i $video -q:a 0 -q:v 0 -f webm "$videoName".webm
+			;;
+		mp4)
+			echo "The format is mp4"
+			ffmpeg -loglevel panic -i $video -q:a 0 -q:v 0 -f mp4 "$videoName".mp4
+			;;
+		flv)
+			echo "The format is flv"
+			ffmpeg -loglevel panic -i $video -q:a 1 -q:v 1 -f flv "$videoName".flv
+			;;
+		mpeg)
+			echo "The format is mpeg"
+			ffmpeg -loglevel panic -i $video -q:a 1 -q:v 1 -f mpeg "$videoName".mpeg
+			;;
+		ogg)
+			echo "The format is ogg"
+			ffmpeg -loglevel panic -i $video -q:a 1 -q:v 1 -f ogg "$videoName".ogg
+			;;
+
+		*)
+			echo "Format is not be supported!"
+			exit 1
+			;;
+		esac	
+fi
+
+}
+
+completed(){
+echo "Completed."
+}
+
+usage_help(){
+less <<  _EOF_
+	Name:
+		converter
+	DESCRIPTION:
+		Media Converter is a unix program that can be used to do various media
+		tasks. It can be used to convert video files to audio files, it
+		can also be used to create a video from audio and image and 
+		other basic media conversions.
+		This program uses ffmpeg  video converter
+	USAGE:
+		converter -option
+		The program will guide you afterwords
+	OPTIONS:
+		-c : This option is used for basic video to audio conversion
+			 Note: if output name already exists they will be overwritten
+		-p : This option is used to create a video from a raw image
+		     file and audio file.
+		-b : To convert your videos or audio from one format to another
+			 say video from mkv to avi,audio from mp3 to mp4
+		--help: used to display this help page
+
+_EOF_
+
+}
+
+if [ -z "$1" ]
+then
+#	usage_help
+	echo "usage:check converter --help"
+	exit 0
+fi
+
+
+if [ "$1" == "-c" ]
+then
+	convert
+	completed
+#	exit 0
+
+	
+elif [ "$1" == "-p" ]
+then
+	pic2Video
+	completed
+	exit 0
+	
+elif [ 	"$1" == "--help" ]
+then
+	usage_help
+	exit 0
+	
+elif [ "$1" == "-b" ]
+then
+	formatConvert
+	completed
+	exit 0
+	
+else
+	echo "Unrecognized option, Try converter --help to learn more"
+	exit 1
+fi	
+
